@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Login - PokerFace.ai{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-wrapper row justify-content-center text-center py-3">
+        <div class="col-md-8 col-lg-7">
+            <div class="card auth-card shadow-lg border-0">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="badge auth-chip">Welcome back</span>
+                    </div>
+                    <h1 class="h3 mb-2">Sign in to play</h1>
+                    <p class="text-secondary mb-4">Resume your table or start a fresh hand with your saved profile.</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        <div class="mb-3 text-start">
+                            <label class="form-label text-secondary">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors|first }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label class="form-label text-secondary">Password</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors|first }}</div>{% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100">Login</button>
+                    </form>
+                    <div class="form-footer mt-3">
+                        <p class="small mb-1 text-secondary">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+                        <span class="small text-secondary">Need help? Contact admin.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

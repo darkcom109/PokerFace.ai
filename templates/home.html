@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}PokerFace.ai - Home{% endblock %}
+{% block content %}
+<div class="row align-items-center g-4 py-5">
+    <div class="col-lg-6">
+        <p class="badge bg-success-soft text-success text-uppercase small mb-3">AI poker trainer</p>
+        <h1 class="display-5 fw-bold mb-3">Sharpen your poker intuition with guided practice.</h1>
+        <p class="lead text-secondary mb-4">Play against adaptive bots, see live win probabilities, and get actionable advice on every street.</p>
+        <div class="d-flex gap-3">
+            <a class="btn btn-light btn-lg" href="{% url 'signup' %}">Sign up free</a>
+            <a class="btn btn-outline-light btn-lg" href="{% url 'login' %}">Login</a>
+        </div>
+        <div class="mt-4 text-secondary small">
+            <ul class="list-unstyled mb-0">
+                <li>• Win probability estimation via Monte Carlo sims</li>
+                <li>• Simple bot opponents to pressure-test your decisions</li>
+                <li>• Clean UI with card visuals and hand logs</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card bg-secondary-subtle text-dark shadow-lg border-0">
+            <div class="card-body">
+                <h2 class="h5 mb-3">What to expect</h2>
+                <p class="mb-0 text-secondary">Start a quick session, get advice on your best line, and review each hand in the log. Coming soon: blinds, deeper bot logic, and hand history review.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

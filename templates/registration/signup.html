@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sign up - PokerFace.ai{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-wrapper row justify-content-center text-center py-3">
+        <div class="col-md-8 col-lg-7">
+            <div class="card auth-card shadow-lg border-0">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="badge auth-chip">Join the table</span>
+                    </div>
+                    <h1 class="h3 mb-2">Create your account</h1>
+                    <p class="text-secondary mb-4">Save your sessions, keep your stacks between hands, and track your practice.</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        {% for field in form %}
+                            <div class="mb-3 text-start">
+                                <label class="form-label text-secondary">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+                                {% if field.errors %}<div class="text-danger small">{{ field.errors|first }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-dark w-100">Sign up</button>
+                    </form>
+                    <div class="form-footer mt-3">
+                        <p class="small mb-1 text-secondary">Already registered? <a href="{% url 'login' %}">Login</a></p>
+                        <span class="small text-secondary">Takes under a minute.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

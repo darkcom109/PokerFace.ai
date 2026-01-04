@@ -1,0 +1,108 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}Play - PokerFace.ai{% endblock %}
+{% block content %}
+<div class="py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <span class="badge status-badge {% if is_over %}done{% else %}active{% endif %}" id="hand-status">
+                {% if is_over %}Hand complete{% else %}In progress{% endif %}
+            </span>
+        </div>
+        <div>
+            <a class="btn btn-outline-light" href="{% url 'new_hand' %}">Start New Hand</a>
+        </div>
+    </div>
+    <div class="alert alert-warning py-2 px-3 d-none" id="table-notice"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="table-felt rounded-4 p-4 mb-3 shadow-lg">
+                <div class="d-flex justify-content-between flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="label">Street</div>
+                        <div class="value" id="street-label">{{ state.street|title }}</div>
+                    </div>
+                    <div>
+                        <div class="label">Pot</div>
+                        <div class="value" id="pot-value">{{ state.pot }}</div>
+                    </div>
+                    <div>
+                        <div class="label">Your stack</div>
+                        <div class="value" id="player-stack">{{ state.player.stack }}</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-secondary small mb-1">Community</div>
+                    <div class="d-flex gap-2 flex-wrap" id="community-cards"></div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-secondary small mb-1">Your hand</div>
+                    <div class="d-flex gap-2 flex-wrap" id="player-hand"></div>
+                </div>
+
+                <div>
+                    <div class="text-secondary small mb-1">Bots</div>
+                    <div class="d-flex gap-2 flex-wrap" id="bots"></div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-4" id="actions">
+                <a class="btn btn-outline-light action-btn"
+                   data-move="fold"
+                   data-href="{% url 'player_action' 'fold' %}"
+                   href="{% url 'player_action' 'fold' %}">Fold</a>
+                <a class="btn btn-light action-btn"
+                   data-move="call"
+                   data-href="{% url 'player_action' 'call' %}"
+                   href="{% url 'player_action' 'call' %}">Check / Call {{ call_amount }}</a>
+                <a class="btn btn-warning action-btn"
+                   data-move="raise"
+                   data-href="{% url 'player_action' 'raise' %}"
+                   href="{% url 'player_action' 'raise' %}">Raise {{ raise_amount }}</a>
+            </div>
+
+            <div class="card bg-secondary-subtle text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="text-uppercase small text-secondary mb-1">AI Guidance</div>
+                            <h2 class="h5 mb-0" id="advice-title">Play the spot</h2>
+                        </div>
+                        {% if state.last_advice %}
+                            <span class="badge bg-dark text-light" id="advice-badge">{{ state.last_advice.win_prob }}% win chance</span>
+                        {% else %}
+                            <span class="badge bg-dark text-light" id="advice-badge">--</span>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1" id="advice-message">
+                        {% if state.last_advice %}{{ state.last_advice.message }}{% else %}Finish the hand or start a new one to see guidance.{% endif %}
+                    </p>
+                    <p class="small mb-0 text-secondary" id="advice-action">
+                        {% if state.last_advice %}Suggested action: {{ state.last_advice.suggested_action }}{% endif %}
+                    </p>
+                    <p class="small mb-0 text-secondary" id="advice-explain">
+                        {% if state.last_advice %}{{ state.last_advice.explanation }}{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-secondary-subtle text-dark h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-secondary">Hand log</h2>
+                    <div class="log-box" id="log-entries">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{{ state|json_script:"initial-state" }}
+<script src="{% static 'game/app.js' %}"></script>
+{% endblock %}
