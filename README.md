@@ -2,6 +2,9 @@
 
 A Django-powered Texas Hold'em trainer with bot opponents, Monte Carlo win equity, heuristic policy hints, and an optional local LLM tipper (via Ollama) layered on top.
 
+<img width="960" height="441" alt="2026-01-05" src="https://github.com/user-attachments/assets/7113133c-3a28-49e7-80e0-d4dbcccd8240" />
+<img width="960" height="441" alt="Screenshot 2026-01-05 022818" src="https://github.com/user-attachments/assets/60014b9e-5ffe-489e-962e-1e3deb6d408d" />
+
 ## Features
 - Fast, session-based play against 4 bots (no DB writes per hand).
 - Monte Carlo win probability + heuristic policy advice each street.
