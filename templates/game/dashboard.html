@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - PokerFace.ai{% endblock %}
 {% block content %}
+<div class="loading-overlay d-none" id="loading-overlay">
+    <div class="loading-box text-center">
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div class="fw-semibold text-light" id="loading-text">Setting up the table...</div>
+    </div>
+</div>
 <div class="py-4">
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
@@ -9,7 +15,7 @@
         </div>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-light" href="{% url 'play' %}">Enter Table</a>
-            <a class="btn btn-light" href="{% url 'new_hand' %}">Start New Hand</a>
+            <a class="btn btn-light start-hand" href="{% url 'new_hand' %}">Start New Hand</a>
         </div>
     </div>
 
@@ -82,4 +88,18 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  (() => {
+    const overlay = document.getElementById("loading-overlay");
+    const text = document.getElementById("loading-text");
+    document.querySelectorAll(".start-hand").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (text) text.textContent = "Starting new hand...";
+        if (overlay) overlay.classList.remove("d-none");
+      });
+    });
+  })();
+ </script>
 {% endblock %}

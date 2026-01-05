@@ -1,4 +1,5 @@
 from . import cards
+import random
 
 DEFAULT_STACK = 500
 DEFAULT_BOTS = 4
@@ -12,6 +13,7 @@ def new_hand(prev_state=None, num_bots=DEFAULT_BOTS, starting_stack=DEFAULT_STAC
     """Start a fresh hand; reuse existing stacks if prev_state is provided."""
     # Always seat DEFAULT_BOTS to avoid carrying over larger tables from prior state
     num_bots = DEFAULT_BOTS
+    player_first = random.choice([True, False])
     if prev_state:
         prev_bots = prev_state.get("bots", [])
         player_stack = prev_state.get("player", {}).get("stack", starting_stack)
@@ -53,6 +55,8 @@ def new_hand(prev_state=None, num_bots=DEFAULT_BOTS, starting_stack=DEFAULT_STAC
         "raise_done": False,  # cap raises per street
         "log": ["New hand started."],
         "last_advice": None,
+        "player_first": player_first,
+        "opening_done": player_first,  # if bots start, we'll run them once and flip this
     }
     return state
 

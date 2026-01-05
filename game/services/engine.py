@@ -1,4 +1,4 @@
-from . import cards, hand_eval, simulation, advice, policy, llm
+from . import cards, hand_eval, simulation, advice, policy
 
 CALL_AMOUNT = 10
 RAISE_AMOUNT = 20
@@ -24,7 +24,6 @@ def ensure_advice(state):
     to_call = min(pending, state["player"]["stack"])
     policy_hint = policy.recommend(state, win_prob)
     prev_ai = state.get("last_advice", {}).get("ai_note") if state.get("last_advice") else None
-    llm_note = llm.ai_guidance(state, win_prob, policy_hint) or prev_ai
     state["last_equity"] = win_prob
     state["last_policy"] = policy_hint
     state["last_advice"] = advice.suggest(
@@ -36,7 +35,8 @@ def ensure_advice(state):
         hand_label=hand_label,
         board_cards=len(state["community"]),
         policy_note=f"{policy_hint['action']} - {policy_hint['reason']}",
-        ai_note=llm_note or "AI tip pending...",
+        # Always request a fresh AI tip for the current spot; frontend will fetch asynchronously.
+        ai_note="AI tip pending...",
     )
 
 
@@ -140,7 +140,21 @@ def bots_act(state):
             bot["hand"], state["community"], num_opponents=1, iterations=200, deck=state["deck"]
         )
 
-        if raise_allowed and pending == 0 and bot_prob >= 0.65 and not player_all_in:
+        if player_all_in:
+            # When hero is all-in, each bot either calls all-in or folds.
+            if bot_prob >= 0.35:
+                bet = bot["stack"]
+                bot["stack"] = 0
+                state["pot"] += bet
+                action = f"{bot['name']} calls all-in for {bet}."
+            else:
+                bot["folded"] = True
+                action = f"{bot['name']} folds."
+            events.append(action)
+            state["log"].append(action)
+            continue
+
+        if raise_allowed and pending == 0 and bot_prob >= 0.65:
             bet = min(RAISE_AMOUNT, bot["stack"])
             bot["stack"] -= bet
             state["pot"] += bet
@@ -269,3 +283,18 @@ def deal_remaining_board(state, events):
         state["street"] = "river"
     state["pending_call"] = 0
     state["raise_done"] = False
+
+
+def maybe_opening_bots(state):
+    """
+    If this hand is set for bots to act first, let them act once preflop.
+    """
+    if state.get("opening_done"):
+        return
+    if state.get("street") != "preflop":
+        return
+    if state.get("player_first"):
+        state["opening_done"] = True
+        return
+    bots_act(state)
+    state["opening_done"] = True

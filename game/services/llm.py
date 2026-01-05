@@ -18,17 +18,15 @@ def summarize_state(state, win_prob, policy_hint):
     policy_text = f"{policy_hint['action']} - {policy_hint['reason']}" if policy_hint else "none"
     pct = int(win_prob * 100)
     return (
-        "You are an assistant giving concise poker tips. "
-        "Use plain language, one sentence, no emojis. "
-        f"Hero hand: {hero}. Board: {board}. "
-        f"Street: {state.get('street')}, pot: {state.get('pot')}, to call: {pending}. "
-        f"Opponents: {opponents}. Estimated win probability: {pct}%. "
-        f"Heuristic policy: {policy_text}. "
-        "Give an actionable tip for the hero's next decision."
+        "One-sentence poker tip, no emojis. "
+        f"Hero: {hero}. Board: {board}. Street: {state.get('street')}. "
+        f"Pot: {state.get('pot')}, to call: {pending}. Opponents: {opponents}. "
+        f"Equity: {pct}%. Policy: {policy_text}. "
+        "Give the best next action and why in one short sentence."
     )
 
 
-def query_ollama(prompt, *, timeout=8):
+def query_ollama(prompt, *, timeout=30):
     """
     Hit a local Ollama server if available.
     Returns text or None if unavailable.
@@ -46,8 +44,9 @@ def query_ollama(prompt, *, timeout=8):
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(endpoint, data=data, headers={"Content-Type": "application/json"})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # ignore env proxies
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with opener.open(req, timeout=timeout) as resp:
             body = resp.read()
     except (urllib.error.URLError, TimeoutError, ConnectionError):
         return None

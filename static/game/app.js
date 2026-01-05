@@ -11,6 +11,11 @@
   const adviceBadgeEl = document.getElementById("advice-badge");
   const adviceActionEl = document.getElementById("advice-action");
   const adviceExplainEl = document.getElementById("advice-explain");
+  const aiNoteRow = document.getElementById("ai-note-row");
+  const aiSpinner = document.getElementById("ai-spinner");
+  const aiNoteText = document.getElementById("ai-note-text");
+  const loadingOverlay = document.getElementById("loading-overlay");
+  const loadingText = document.getElementById("loading-text");
   const handStatusEl = document.getElementById("hand-status");
   const initialScript = document.getElementById("initial-state");
   const tableNoticeEl = document.getElementById("table-notice");
@@ -36,6 +41,12 @@
         btn.setAttribute("aria-disabled", "true");
       }
     });
+  }
+
+  function setLoading(show, text = "Loading...") {
+    if (!loadingOverlay) return;
+    if (loadingText) loadingText.textContent = text;
+    loadingOverlay.classList.toggle("d-none", !show);
   }
 
   function createCardEl(card) {
@@ -125,12 +136,21 @@
         base = base.split("AI guidance:")[0].trim();
       }
       const aiNote = advice.ai_note;
-      adviceExplainEl.textContent = aiNote ? `${base} AI guidance: ${aiNote}`.trim() : base;
+      adviceExplainEl.textContent = base;
+      if (aiNoteRow) {
+        aiNoteRow.classList.remove("d-none");
+        aiNoteText.textContent = aiNote || "AI tip pending...";
+        const pending = !aiNote || /pending/i.test(aiNote);
+        if (aiSpinner) {
+          aiSpinner.classList.toggle("d-none", !pending);
+        }
+      }
     } else {
       adviceMsgEl.textContent = "Finish the hand or start a new one to see guidance.";
       adviceBadgeEl.textContent = "--";
       adviceActionEl.textContent = "";
       adviceExplainEl.textContent = "";
+      if (aiNoteRow) aiNoteRow.classList.add("d-none");
     }
   }
 
@@ -151,7 +171,10 @@
     if (aiPending && lastAiKey === key) return;
     aiPending = true;
     lastAiKey = key;
-    adviceExplainEl.textContent = `${advice.explanation || "Generating AI tip..."}`;
+    if (aiNoteText && (!aiNote || /pending|unavailable/i.test(aiNote))) {
+      aiNoteText.textContent = "AI tip pending...";
+    }
+    if (aiSpinner) aiSpinner.classList.remove("d-none");
     fetch("/ai-tip/", {
       method: "GET",
       headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -160,15 +183,19 @@
       .then((res) => res.json())
       .then((data) => {
         aiPending = false;
-        if (data?.ai_note) {
-          currentState = currentState || state;
+        if (data?.ai_note && currentState) {
           currentState.last_advice = currentState.last_advice || {};
           currentState.last_advice.ai_note = data.ai_note;
           renderAdvice(currentState.last_advice);
+        } else if (data?.ai_note && !currentState) {
+          adviceExplainEl.textContent = adviceExplainEl.textContent;
+          if (aiNoteText) aiNoteText.textContent = data.ai_note;
+          if (aiSpinner) aiSpinner.classList.add("d-none");
         }
       })
       .catch(() => {
         aiPending = false;
+        if (aiSpinner) aiSpinner.classList.add("d-none");
       });
   }
 
@@ -237,6 +264,7 @@
       if (btn.classList.contains("disabled")) return;
       playClickSound();
       setActionsEnabled(false);
+      const beforeLog = lastCounts.log || 0;
       const url = btn.dataset.hrefOriginal || btn.dataset.href || btn.getAttribute("href");
       fetch(url, {
         method: "GET",
@@ -261,10 +289,20 @@
           }
         })
         .finally(() => {
-          setActionsEnabled(true);
+          // Simulate bot thinking time based on how many new log lines arrived.
+          const newLogCount = (currentState?.log?.length || 0) - beforeLog;
+          const delay = Math.min(1500, 400 + Math.max(newLogCount, 1) * 180);
+          setTimeout(() => setActionsEnabled(true), delay);
         });
     });
   });
+
+  const startHandBtn = document.querySelector(".start-hand");
+  if (startHandBtn) {
+    startHandBtn.addEventListener("click", () => {
+      setLoading(true, "Starting new hand...");
+    });
+  }
 
   if (initialScript) {
     try {

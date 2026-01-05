@@ -46,6 +46,7 @@ def play(request):
     state = state_svc.load(request.session)
     if state is None or state.get("street") == "hand_over":
         state = state_svc.new_game()
+    engine.maybe_opening_bots(state)
     engine.ensure_advice(state)
     state_svc.save(request.session, state)
     is_over = state.get("street") == "hand_over" or state.get("player", {}).get("folded")
@@ -135,4 +136,5 @@ def ai_tip(request):
         state_svc.save(request.session, state)
         return JsonResponse({"ai_note": note})
 
-    return JsonResponse({"ai_note": None}, status=202)
+    # Return a friendly unavailable message to avoid indefinite "pending".
+    return JsonResponse({"ai_note": "AI tip unavailable right now; will retry shortly."}, status=202)

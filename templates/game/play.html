@@ -2,6 +2,12 @@
 {% load static %}
 {% block title %}Play - PokerFace.ai{% endblock %}
 {% block content %}
+<div class="loading-overlay d-none" id="loading-overlay">
+    <div class="loading-box text-center">
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div class="fw-semibold text-light" id="loading-text">Setting up the table...</div>
+    </div>
+</div>
 <div class="py-4">
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
@@ -10,7 +16,7 @@
             </span>
         </div>
         <div>
-            <a class="btn btn-outline-light" href="{% url 'new_hand' %}">Start New Hand</a>
+            <a class="btn btn-outline-light start-hand" href="{% url 'new_hand' %}">Start New Hand</a>
         </div>
     </div>
     <div class="alert alert-warning py-2 px-3 d-none" id="table-notice"></div>
@@ -91,9 +97,16 @@
                     <p class="small mb-0 text-secondary" id="advice-action">
                         {% if state.last_advice %}Suggested action: {{ state.last_advice.suggested_action }}{% endif %}
                     </p>
-                    <p class="small mb-0 text-secondary" id="advice-explain">
+                    <p class="small mb-1 text-secondary" id="advice-explain">
                         {% if state.last_advice %}{{ state.last_advice.explanation }}{% endif %}
                     </p>
+                    <div class="ai-note-row small text-secondary d-flex align-items-center gap-2 mt-2" id="ai-note-row">
+                        <div class="ai-sep"></div>
+                        <div class="spinner-border spinner-border-sm d-none" role="status" id="ai-spinner"></div>
+                        <span id="ai-note-text">
+                            {% if state.last_advice %}{{ state.last_advice.ai_note|default:"AI tip pending..." }}{% else %}AI tip pending...{% endif %}
+                        </span>
+                    </div>
                 </div>
             </div>
             <div class="card bg-secondary-subtle text-dark h-100">
