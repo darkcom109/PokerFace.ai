@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wm82j!a7=^ttd5k*j_re-kn-9$bf#*8ad1k12fp5o)z^a&c9ib
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "pokerface-ai.onrender.com"]
 
 
 # Application definition
