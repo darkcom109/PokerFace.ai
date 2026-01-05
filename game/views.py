@@ -1,5 +1,6 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
@@ -92,6 +93,12 @@ def collect_chips(request):
     return redirect("dashboard")
 
 
+def logout_get(request):
+    """Allow logout via GET for convenience; redirects home."""
+    logout(request)
+    return redirect("home")
+
+
 @login_required
 def ai_tip(request):
     """
@@ -99,6 +106,8 @@ def ai_tip(request):
     """
     state = state_svc.load(request.session)
     if not state:
+        return JsonResponse({"ai_note": None}, status=400)
+    if state.get("street") == "hand_over" or state.get("player", {}).get("folded"):
         return JsonResponse({"ai_note": None}, status=400)
 
     # Ensure we have an equity estimate to drive the prompt.

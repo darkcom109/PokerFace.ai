@@ -1,28 +1,51 @@
 {% extends "base.html" %}
 {% block title %}PokerFace.ai - Home{% endblock %}
+{% block main_class %}w-100 px-0{% endblock %}
 {% block content %}
-<div class="row align-items-center g-4 py-5">
-    <div class="col-lg-6">
-        <p class="badge bg-success-soft text-success text-uppercase small mb-3">AI poker trainer</p>
-        <h1 class="display-5 fw-bold mb-3">Sharpen your poker intuition with guided practice.</h1>
-        <p class="lead text-secondary mb-4">Play against adaptive bots, see live win probabilities, and get actionable advice on every street.</p>
-        <div class="d-flex gap-3">
-            <a class="btn btn-light btn-lg" href="{% url 'signup' %}">Sign up free</a>
-            <a class="btn btn-outline-light btn-lg" href="{% url 'login' %}">Login</a>
-        </div>
-        <div class="mt-4 text-secondary small">
-            <ul class="list-unstyled mb-0">
-                <li>• Win probability estimation via Monte Carlo sims</li>
-                <li>• Simple bot opponents to pressure-test your decisions</li>
-                <li>• Clean UI with card visuals and hand logs</li>
-            </ul>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card bg-secondary-subtle text-dark shadow-lg border-0">
-            <div class="card-body">
-                <h2 class="h5 mb-3">What to expect</h2>
-                <p class="mb-0 text-secondary">Start a quick session, get advice on your best line, and review each hand in the log. Coming soon: blinds, deeper bot logic, and hand history review.</p>
+<div class="hero-section rounded-4 shadow-lg">
+    <div class="container px-3 px-md-4 py-4 py-md-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge bg-success-soft text-success text-uppercase small mb-3">AI poker trainer</span>
+                <h1 class="display-5 fw-bold mb-3">Sharpen your poker intuition with guided practice.</h1>
+                <p class="lead text-secondary mb-4">Play against adaptive bots, see live win probabilities, and get actionable advice on every street.</p>
+                <div class="d-flex flex-wrap gap-3 mb-3">
+                    <a class="btn btn-light btn-lg" href="{% url 'signup' %}">Sign up free</a>
+                    <a class="btn btn-outline-light btn-lg" href="{% url 'login' %}">Login</a>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <span class="pill">Monte Carlo win %</span>
+                    <span class="pill">Bot pressure tests</span>
+                    <span class="pill">Actionable tips</span>
+                    <span class="pill">Hand log review</span>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="glass-card shadow-lg border-0 p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <div class="text-uppercase small text-secondary mb-1">What to expect</div>
+                            <h2 class="h5 mb-0">Play, learn, review</h2>
+                        </div>
+                        <span class="badge bg-dark text-light">Live guidance</span>
+                    </div>
+                    <ul class="list-unstyled text-secondary mb-3 small">
+                        <li>• Quick sessions with live equity and suggested lines.</li>
+                        <li>• Bots that call, raise, or shove to test your decisions.</li>
+                        <li>• Showdown explanations and bot hole-card reveal.</li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-fan position-relative">
+                            <div class="playing-card mini red">♥A</div>
+                            <div class="playing-card mini black">♠K</div>
+                            <div class="playing-card mini red">♦Q</div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-light fw-semibold">Take a seat</div>
+                            <div class="text-secondary small">Start a hand, follow the AI hint, and see how it plays out.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from game import views as game_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Override logout to allow GET for convenience.
+    path("accounts/logout/", game_views.logout_get, name="logout"),
     path("", include("game.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
 ]
