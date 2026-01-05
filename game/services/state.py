@@ -29,11 +29,14 @@ def new_hand(prev_state=None, num_bots=DEFAULT_BOTS, starting_stack=DEFAULT_STAC
     bots = []
     for idx in range(num_bots):
         bot_hand = cards.draw(deck, 2)
+        # Randomize bot stacks a bit on each new hand for variety.
+        stack_val = bot_stacks[idx] if idx < len(bot_stacks) else starting_stack
+        stack_val = max(200, int(stack_val * random.uniform(0.8, 1.2)))
         bots.append(
             {
                 "name": f"Bot {idx + 1}",
                 "hand": bot_hand,
-                "stack": bot_stacks[idx] if idx < len(bot_stacks) else starting_stack,
+                "stack": stack_val,
                 "folded": False,
             }
         )
@@ -56,7 +59,7 @@ def new_hand(prev_state=None, num_bots=DEFAULT_BOTS, starting_stack=DEFAULT_STAC
         "log": ["New hand started."],
         "last_advice": None,
         "player_first": player_first,
-        "opening_done": player_first,  # if bots start, we'll run them once and flip this
+        "opening_done": False,
     }
     return state
 

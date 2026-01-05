@@ -66,6 +66,8 @@ def play(request):
 def new_hand(request):
     prev = state_svc.load(request.session)
     state = state_svc.new_hand(prev_state=prev)
+    # If bots are set to start, let them act once before rendering play.
+    engine.maybe_opening_bots(state)
     engine.ensure_advice(state)
     state_svc.save(request.session, state)
     return redirect("play")

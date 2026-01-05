@@ -242,7 +242,27 @@
         tableNoticeEl.classList.add("d-none");
       }
     }
+    const forcedShove =
+      !isOver &&
+      !isAllIn &&
+      (state.pending_call || 0) > 0 &&
+      (state.pending_call || 0) >= (state.player?.stack || 0);
+
     setActionsEnabled(!isOver && !isAllIn);
+    if (forcedShove) {
+      actionButtons.forEach((btn) => {
+        const move = btn.dataset.move;
+        if (move === "call" || move === "raise") {
+          btn.classList.add("disabled", "action-disabled");
+          btn.setAttribute("href", "javascript:void(0)");
+          btn.setAttribute("aria-disabled", "true");
+        }
+      });
+      if (tableNoticeEl) {
+        tableNoticeEl.textContent = "Facing all-in: you can fold or call all-in.";
+        tableNoticeEl.classList.remove("d-none");
+      }
+    }
 
     if (currentCommunity > prevCommunity) {
       playDealSound();

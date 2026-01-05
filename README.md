@@ -1,24 +1,48 @@
-﻿# PokerFace.ai
+# PokerFace.ai
 
-Practice Texas Hold’em against bots while the app estimates your win probability and suggests actions.
+A Django-powered Texas Hold'em trainer with bot opponents, Monte Carlo win equity, heuristic policy hints, and an optional local LLM tipper (via Ollama) layered on top.
 
-## Quick start
-```
-# from repo root
+## Features
+- Fast, session-based play against 4 bots (no DB writes per hand).
+- Monte Carlo win probability + heuristic policy advice each street.
+- Optional local LLM guidance (Ollama) fetched asynchronously.
+- Dashboard with chip top-up, quick table entry, and clean UI with card art.
+- All-in handling, showdown hand explanations, and bot card reveal at end.
+
+## Quick start (local dev)
+```bash
 python -m venv venv
-./venv/Scripts/Activate
-python -m pip install -r requirements.txt  # or pip install "django>=6.0,<6.1"
+./venv/Scripts/activate          # On Windows PowerShell: .\venv\Scripts\Activate
+python -m pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
-Open http://127.0.0.1:8000/ to play.
+Open http://127.0.0.1:8000/.
 
-## How it works
-- Django app `game` holds session-based state (no database tables needed).
-- Service layer handles cards, hand evaluation, Monte Carlo win probability, and simple bot logic.
-- UI uses Bootstrap + custom CSS; actions are handled via standard links/buttons.
+## Optional: local LLM tips (offline)
+1) Install Ollama (https://ollama.com/download) and start it: `ollama serve`.
+2) Pull a small model (default in code is `gemma3:4b`): `ollama pull gemma3:4b`.
+3) Test it:
+   ```powershell
+   $body = @{ model = "gemma3:4b"; prompt = "hi"; stream = $false } | ConvertTo-Json
+   Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:11434/api/generate" -Method POST -Body $body -ContentType "application/json"
+   ```
+4) (Optional) Override via env vars: `OLLAMA_MODEL=gemma3:4b` and `OLLAMA_ENDPOINT=http://127.0.0.1:11434/api/generate`.
+If the endpoint is up, the app fetches tips in the background; Monte Carlo advice stays instant.
 
-## Next steps
-- Add proper betting rounds with blinds/pot odds and stack tracking.
-- Reveal bot hole cards only at showdown and surface equities per street.
-- Persist hand histories for review and add difficulty levels for bots.
+## Gameplay notes
+- Turn order is randomized each hand; if bots start, they act once preflop before your turn.
+- Equity thresholds: player advice uses ≥70% raise, 45–69% call/check, <45% fold/check. Bots raise at ≥65% (if no pending bet), call at ≥40% otherwise fold.
+- All-in: if you shove, bots either call all-in (if they like their equity) or fold; remaining board is dealt and showdown runs.
+- Actions are AJAX; no page reload. A brief “thinking” delay simulates bot timing.
+
+## Deploying (summary)
+- Use a real server (gunicorn/uvicorn + nginx), set `DEBUG=False`, `ALLOWED_HOSTS`, `SECRET_KEY`, and move to Postgres.
+- `python manage.py collectstatic` and serve static via nginx.
+- For LLM in production: run an Ollama service on the host (or point `OLLAMA_ENDPOINT` to a hosted model), or disable the tip if you don’t want to ship a model.
+
+## Project structure
+- `game/services/` – cards, hand eval, Monte Carlo sim, policy, engine, optional LLM helper.
+- `templates/` – Django templates (auth, dashboard, play table).
+- `static/game/` – JS (action handling, rendering) and CSS (cards, layout).
+- `game/views.py` – session-backed gameplay endpoints and auth flows.

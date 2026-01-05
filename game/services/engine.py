@@ -154,7 +154,15 @@ def bots_act(state):
             state["log"].append(action)
             continue
 
-        if raise_allowed and pending == 0 and bot_prob >= 0.65:
+        # High confidence shove: go all-in to pressure the player.
+        if raise_allowed and bot_prob >= 0.8:
+            bet = bot["stack"]
+            bot["stack"] = 0
+            state["pot"] += bet
+            state["pending_call"] = max(state.get("pending_call", 0), bet)
+            state["raise_done"] = True
+            action = f"{bot['name']} goes all-in for {bet}."
+        elif raise_allowed and pending == 0 and bot_prob >= 0.65:
             bet = min(RAISE_AMOUNT, bot["stack"])
             bot["stack"] -= bet
             state["pot"] += bet
@@ -292,9 +300,8 @@ def maybe_opening_bots(state):
     if state.get("opening_done"):
         return
     if state.get("street") != "preflop":
-        return
-    if state.get("player_first"):
         state["opening_done"] = True
         return
-    bots_act(state)
+    if not state.get("player_first"):
+        bots_act(state)
     state["opening_done"] = True
