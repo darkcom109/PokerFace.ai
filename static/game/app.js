@@ -16,6 +16,9 @@
   const tableNoticeEl = document.getElementById("table-notice");
   let lastCounts = { community: 0, log: 0 };
   let audioCtx = null;
+  let currentState = null;
+  let aiPending = false;
+  let lastAiKey = null;
 
   function setActionsEnabled(enabled) {
     actionButtons.forEach((btn) => {
@@ -52,6 +55,13 @@
     return el;
   }
 
+  function createBackCard() {
+    const el = document.createElement("div");
+    el.className = "playing-card back";
+    el.innerHTML = `<span class="corner tl">★</span><span class="suit-large">♠</span><span class="corner br">★</span>`;
+    return el;
+  }
+
   function renderCards(container, cards, { ghosts = 0, animateFrom = 0 } = {}) {
     container.innerHTML = "";
     cards.forEach((card, idx) => {
@@ -68,19 +78,35 @@
     }
   }
 
-  function renderBots(bots) {
+  function renderBots(bots, reveal = false) {
     botsEl.innerHTML = "";
-    bots.forEach((bot) => {
+    (bots || []).forEach((bot) => {
       const tag = document.createElement("div");
       tag.className = `bot-tag ${bot.folded ? "bot-folded" : ""}`;
-      tag.innerHTML = `<span class="fw-semibold">${bot.name}</span> <span class="small text-secondary">(${bot.stack})</span>${bot.folded ? '<span class="ms-1 text-danger small">folded</span>' : ""}`;
+      const cardsWrap = document.createElement("div");
+      cardsWrap.className = "cards d-flex gap-2";
+
+      if (reveal && !bot.folded) {
+        (bot.hand || []).forEach((c) => cardsWrap.appendChild(createCardEl(c)));
+      } else if (reveal && bot.folded) {
+        (bot.hand || []).forEach(() => cardsWrap.appendChild(createBackCard()));
+      } else {
+        cardsWrap.appendChild(createBackCard());
+        cardsWrap.appendChild(createBackCard());
+      }
+
+      const text = document.createElement("div");
+      text.className = "text-center";
+      text.innerHTML = `<div class="fw-semibold">${bot.name}</div><div class="small text-secondary">(${bot.stack})${bot.folded ? ' · <span class="text-danger">folded</span>' : ""}</div>`;
+      tag.appendChild(cardsWrap);
+      tag.appendChild(text);
       botsEl.appendChild(tag);
     });
   }
 
   function renderLog(log) {
     logBox.innerHTML = "";
-    log.forEach((entry, idx) => {
+    (log || []).forEach((entry) => {
       const row = document.createElement("div");
       row.className = "small log-entry";
       row.textContent = entry;
@@ -94,7 +120,12 @@
       adviceMsgEl.textContent = advice.message;
       adviceBadgeEl.textContent = `${advice.win_prob}% win chance`;
       adviceActionEl.textContent = `Suggested action: ${advice.suggested_action}`;
-      adviceExplainEl.textContent = advice.explanation || "";
+      let base = advice.explanation || "";
+      if (base.includes("AI guidance:")) {
+        base = base.split("AI guidance:")[0].trim();
+      }
+      const aiNote = advice.ai_note;
+      adviceExplainEl.textContent = aiNote ? `${base} AI guidance: ${aiNote}`.trim() : base;
     } else {
       adviceMsgEl.textContent = "Finish the hand or start a new one to see guidance.";
       adviceBadgeEl.textContent = "--";
@@ -103,33 +134,89 @@
     }
   }
 
+  function aiKey(state) {
+    return `${state.street}-${state.community?.length || 0}-${state.log?.length || 0}`;
+  }
+
+  function maybeFetchAi(state) {
+    const advice = state?.last_advice || {};
+    const aiNote = advice.ai_note || "";
+    const needsAi = !aiNote || /pending|unavailable/i.test(aiNote);
+    const key = aiKey(state);
+    if (!needsAi) {
+      aiPending = false;
+      lastAiKey = key;
+      return;
+    }
+    if (aiPending && lastAiKey === key) return;
+    aiPending = true;
+    lastAiKey = key;
+    adviceExplainEl.textContent = `${advice.explanation || "Generating AI tip..."}`;
+    fetch("/ai-tip/", {
+      method: "GET",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        aiPending = false;
+        if (data?.ai_note) {
+          currentState = currentState || state;
+          currentState.last_advice = currentState.last_advice || {};
+          currentState.last_advice.ai_note = data.ai_note;
+          renderAdvice(currentState.last_advice);
+        }
+      })
+      .catch(() => {
+        aiPending = false;
+      });
+  }
+
   function renderState(state) {
+    currentState = state;
     potEl.textContent = state.pot;
     streetEl.textContent = state.street
       ? state.street.charAt(0).toUpperCase() + state.street.slice(1)
       : "Unknown";
     playerStackEl.textContent = state.player?.stack ?? "--";
+    const isOver = state.street === "hand_over" || state.player?.folded;
+    const isAllIn = !!state.player?.all_in || state.player?.stack === 0;
     const prevCommunity = lastCounts.community || 0;
     const currentCommunity = state.community?.length || 0;
     renderCards(communityEl, state.community || [], {
       ghosts: Math.max(0, 5 - (state.community?.length || 0)),
       animateFrom: Math.min(prevCommunity, state.community?.length || 0),
     });
-    renderCards(playerHandEl, state.player?.hand || [], { ghosts: Math.max(0, 2 - (state.player?.hand?.length || 0)) });
-    renderBots(state.bots || []);
+    renderCards(playerHandEl, state.player?.hand || [], {
+      ghosts: Math.max(0, 2 - (state.player?.hand?.length || 0)),
+    });
+    renderBots(state.bots || [], isOver);
     renderLog(state.log || []);
     renderAdvice(state.last_advice);
+    maybeFetchAi(state);
 
-    const isOver = state.street === "hand_over" || state.player?.folded;
     handStatusEl.textContent = isOver ? "Hand complete" : "In progress";
-    handStatusEl.className = isOver ? "badge status-badge done" : "badge status-badge active";
-    if (tableNoticeEl) {
-      tableNoticeEl.textContent = isOver ? "Hand is finished. Start a new hand to keep playing." : "";
-      tableNoticeEl.classList.toggle("d-none", !isOver);
+    if (isOver) {
+      handStatusEl.className = "badge status-badge done";
+    } else if (isAllIn) {
+      handStatusEl.textContent = "All-in";
+      handStatusEl.className = "badge status-badge active";
+    } else {
+      handStatusEl.className = "badge status-badge active";
     }
-    setActionsEnabled(!isOver);
+    if (tableNoticeEl) {
+      if (isOver) {
+        tableNoticeEl.textContent = "Hand is finished. Start a new hand to keep playing.";
+        tableNoticeEl.classList.remove("d-none");
+      } else if (isAllIn) {
+        tableNoticeEl.textContent = "You are all-in. Waiting for showdown.";
+        tableNoticeEl.classList.remove("d-none");
+      } else {
+        tableNoticeEl.classList.add("d-none");
+      }
+    }
+    setActionsEnabled(!isOver && !isAllIn);
 
-    // Sounds
     if (currentCommunity > prevCommunity) {
       playDealSound();
     } else if ((state.log?.length || 0) > (lastCounts.log || 0)) {
@@ -168,7 +255,6 @@
           }
         })
         .catch(() => {
-          // Keep the user on the page; show a notice if we have one
           if (tableNoticeEl) {
             tableNoticeEl.textContent = "Action failed. Please try again.";
             tableNoticeEl.classList.remove("d-none");
@@ -189,7 +275,6 @@
     }
   }
 
-  // Sound helpers
   function ensureAudioCtx() {
     if (!audioCtx) {
       const Ctor = window.AudioContext || window.webkitAudioContext;
@@ -224,17 +309,5 @@
   function playWinSound() {
     beep(660, 0.12, 0.06);
     setTimeout(() => beep(520, 0.12, 0.05), 80);
-  }
-
-  function getCsrfToken() {
-    const name = "csrftoken";
-    const cookies = document.cookie ? document.cookie.split(";") : [];
-    for (let i = 0; i < cookies.length; i++) {
-      const c = cookies[i].trim();
-      if (c.startsWith(name + "=")) {
-        return decodeURIComponent(c.slice(name.length + 1));
-      }
-    }
-    return "";
   }
 })();

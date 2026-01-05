@@ -14,8 +14,19 @@ def hand_rank_label(score):
     return labels[rank_idx] if 0 <= rank_idx < len(labels) else "unknown"
 
 
-def suggest(win_prob, pot=0, to_call=0, *, street="preflop", opponents=0, hand_label=""):
-    """Return textual advice based on win probability and pot odds."""
+def suggest(
+    win_prob,
+    pot=0,
+    to_call=0,
+    *,
+    street="preflop",
+    opponents=0,
+    hand_label="",
+    board_cards=0,
+    policy_note=None,
+    ai_note=None,
+):
+    """Return textual advice based on win probability and pot odds, with explanation."""
     pct = round(win_prob * 100, 1)
 
     if win_prob >= 0.7:
@@ -32,11 +43,19 @@ def suggest(win_prob, pot=0, to_call=0, *, street="preflop", opponents=0, hand_l
     if to_call:
         odds_hint = f" Pot {pot}, to call {to_call}."
 
+    stage = street or "preflop"
+    board_desc = f"{board_cards} community card(s) shown" if board_cards else "no board yet"
+    made = hand_label or "no made hand"
+    opp_text = f"{opponents} active bot(s)" if opponents else "no active bots"
     explanation = (
-        f"Win estimate {pct}% on the {street} versus {opponents} active bot(s). "
-        f"Your best made hand is {hand_label or 'incomplete'}, which drives this probability. "
-        "Opponent count lowers equity; values update as community cards land."
+        f"Win estimate {pct}% on the {stage}: {board_desc}, best made hand {made}, versus {opp_text}. "
+        "Monte Carlo sim fills remaining cards and deals bot hole cards; more opponents and weaker made strength lower equity. "
+        "Probabilities refresh each street as more cards are known."
     )
+    if policy_note:
+        explanation += f" Policy hint: {policy_note}"
+    if ai_note:
+        explanation += f" AI guidance: {ai_note}"
 
     return {
         "win_prob": pct,
@@ -45,4 +64,5 @@ def suggest(win_prob, pot=0, to_call=0, *, street="preflop", opponents=0, hand_l
         "explanation": explanation,
         "pot": pot,
         "to_call": to_call,
+        "ai_note": ai_note,
     }

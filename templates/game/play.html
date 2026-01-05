@@ -33,19 +33,20 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <div class="text-secondary small mb-1">Community</div>
-                    <div class="d-flex gap-2 flex-wrap" id="community-cards"></div>
-                </div>
-
-                <div class="mb-3">
-                    <div class="text-secondary small mb-1">Your hand</div>
-                    <div class="d-flex gap-2 flex-wrap" id="player-hand"></div>
+                <div class="row g-3 align-items-start mb-3">
+                    <div class="col-lg-7">
+                        <div class="text-secondary small mb-1">Community</div>
+                        <div class="d-flex gap-2 flex-wrap" id="community-cards"></div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="text-secondary small mb-1">Your hand</div>
+                        <div class="d-flex gap-2 flex-wrap" id="player-hand"></div>
+                    </div>
                 </div>
 
                 <div>
                     <div class="text-secondary small mb-1">Bots</div>
-                    <div class="d-flex gap-2 flex-wrap" id="bots"></div>
+                    <div class="bots-row" id="bots"></div>
                 </div>
             </div>
 
@@ -54,6 +55,10 @@
                    data-move="fold"
                    data-href="{% url 'player_action' 'fold' %}"
                    href="{% url 'player_action' 'fold' %}">Fold</a>
+                <a class="btn btn-danger action-btn"
+                   data-move="allin"
+                   data-href="{% url 'player_action' 'allin' %}"
+                   href="{% url 'player_action' 'allin' %}">All In</a>
                 <a class="btn btn-light action-btn"
                    data-move="call"
                    data-href="{% url 'player_action' 'call' %}"
@@ -64,6 +69,9 @@
                    href="{% url 'player_action' 'raise' %}">Raise {{ raise_amount }}</a>
             </div>
 
+        </div>
+
+        <div class="col-lg-4 d-flex flex-column gap-3">
             <div class="card bg-secondary-subtle text-dark">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -88,9 +96,6 @@
                     </p>
                 </div>
             </div>
-        </div>
-
-        <div class="col-lg-4">
             <div class="card bg-secondary-subtle text-dark h-100">
                 <div class="card-body">
                     <h2 class="h6 text-uppercase text-secondary">Hand log</h2>
